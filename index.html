@@ -31,8 +31,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 .kv{display:block;font-size:16px;line-height:1.25}
 .ks{display:block;font-size:10.5px;color:var(--mut)}
 #legenda b{font-size:12px}
-.proj{font-size:11px;line-height:1.35;color:var(--mut);margin:5px 0 2px}
-.proj b{color:var(--ink)}
+#proyeksi{font-size:11.5px;line-height:1.45;color:var(--mut)}
+#proyeksi b{color:var(--ink);font-size:12px}
 .bar{height:10px;border-radius:5px;margin:6px 0 3px}
 .lab{display:flex;justify-content:space-between;font-size:11px;color:var(--mut)}
 
@@ -92,6 +92,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 #modal ul{margin:8px 0 0;padding-left:18px}
 #modal li{margin:5px 0}
 .leaflet-control-zoom a{color:var(--ink)}
+.leaflet-control-scale-line{background:rgba(255,255,255,.88);color:var(--ink);font-weight:600;border-color:var(--ink);padding:1px 6px}
 
 @media(max-width:720px){
   #kiri{width:calc(100vw - 24px)}
@@ -101,6 +102,8 @@ button{font:inherit;color:inherit;cursor:pointer}
   body.stat-on #stat{display:block}
   #btn-stat{display:block}
   .leaflet-control-zoom{display:none}
+  .leaflet-bottom{bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+  body.sub-on .leaflet-bottom{bottom:calc(116px + env(safe-area-inset-bottom,0px))}
   .kv{font-size:14px}
 }
 </style>
@@ -119,6 +122,7 @@ button{font:inherit;color:inherit;cursor:pointer}
     <div class="card kpi" data-k="diff"><span class="kl">Perubahan (ton)</span><b class="kv" id="kd"></b><span class="ks" id="kds"></span></div>
   </div>
   <div class="card" id="legenda"></div>
+  <div class="card" id="proyeksi"></div>
 </div>
 
 <div id="kanan">
@@ -213,12 +217,16 @@ $('#k22').textContent = big(C.tot22);
 $('#k22s').textContent = 'rata-rata ' + nf(C.mean22, 1) + ' ' + C.satuan;
 $('#kd').textContent = sg(C.net) + big(C.net);
 $('#kds').textContent = sgn(C.pct, 1) + '% dari 2019';
+if (C.proyeksi && C.proyeksi.length) {
+  $('#proyeksi').innerHTML = '<b>Sistem Proyeksi</b><br>' + C.proyeksi.join('<br>');
+} else { $('#proyeksi').hidden = true; }
 $('#info').innerHTML = C.info.map(function (t) { return '<li>' + t + '</li>'; }).join('');
 
 /* ---------- peta dan basemap ---------- */
 var map = L.map('map', {zoomControl: false, zoomSnap: 0.25, minZoom: 6, maxZoom: 19});
 map.fitBounds(C.bounds);
 L.control.zoom({position: 'bottomleft'}).addTo(map);
+L.control.scale({position: 'bottomright', metric: true, imperial: false, maxWidth: 140}).addTo(map);
 var ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
 var bm = {
   terang: L.tileLayer(ESRI + 'Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
@@ -406,9 +414,7 @@ function updateLegend() {
   var lab = d
     ? ['\u2212' + nf(C.dm, 0), '0', '+' + nf(C.dm, 0)]
     : [nf(C.vmin, 0), nf((C.vmin + C.vmax) / 2, 0), nf(C.vmax, 0) + '+'];
-  var proj = (C.proyeksi && C.proyeksi.length)
-    ? '<div class="proj"><b>Sistem Proyeksi</b><br>' + C.proyeksi.join('<br>') + '</div>' : '';
-  var h = '<b>' + (d ? 'Perubahan stok karbon' : 'Stok karbon') + ' (' + C.satuan + ')</b>' + proj + bar +
+  var h = '<b>' + (d ? 'Perubahan stok karbon' : 'Stok karbon') + ' (' + C.satuan + ')</b>' + bar +
     '<div class="lab"><span>' + lab[0] + '</span><span>' + lab[1] + '</span><span>' + lab[2] + '</span></div>';
   if (d) h += '<div class="lab"><span>&#9664; Berkurang</span><span>Bertambah &#9654;</span></div>';
   $('#legenda').innerHTML = h;
